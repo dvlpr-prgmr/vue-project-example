@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 
 class GeminiService {
   constructor() {
+    console.log('Gemini API Key (build time):', import.meta.env.VITE_GEMINI_API_KEY);
     const envApiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const localApiKey = localStorage.getItem('gemini_api_key');
     this.apiKey = envApiKey || localApiKey;
