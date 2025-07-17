@@ -63,14 +63,34 @@
           <label for="solusi" class="block text-sm font-medium text-gray-700 mb-2">
             Solusi <span class="text-red-500">*</span>
           </label>
-          <textarea
-            id="solusi"
-            v-model="formData.solusi"
-            rows="4"
-            placeholder="Jelaskan solusi yang diterapkan..."
-            required
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-          ></textarea>
+          <div class="relative">
+            <textarea
+              id="solusi"
+              v-model="formData.solusi"
+              rows="4"
+              placeholder="Jelaskan solusi yang diterapkan..."
+              required
+              class="w-full px-4 py-3 pr-32 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+            ></textarea>
+            <button
+              type="button"
+              @click="generateSolution"
+              :disabled="!formData.kegiatan.trim() || isGenerating"
+              class="absolute top-2 right-2 bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-1"
+            >
+              <svg v-if="isGenerating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"/>
+              </svg>
+              {{ isGenerating ? 'Generating...' : 'Generate by AI' }}
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            Isi kegiatan terlebih dahulu, lalu klik "Generate by AI" untuk mendapatkan saran solusi otomatis
+          </p>
         </div>
 
         <!-- Buttons -->
@@ -101,6 +121,19 @@
         <div>
           <h3 class="text-green-800 font-medium">Berhasil!</h3>
           <p class="text-green-700 text-sm mt-1">Data proyek berhasil disimpan.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generation Error Message -->
+    <div v-if="generationError" class="bg-red-50 border-l-4 border-red-500 p-4 m-6">
+      <div class="flex">
+        <svg class="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+          <h3 class="text-red-800 font-medium">Error</h3>
+          <p class="text-red-700 text-sm mt-1">{{ generationError }}</p>
         </div>
       </div>
     </div>
@@ -155,6 +188,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import geminiService from '../services/gemini.js'
 
 const formData = ref({
   tanggal: '',
@@ -165,6 +199,43 @@ const formData = ref({
 
 const savedData = ref([])
 const showSuccess = ref(false)
+const isGenerating = ref(false)
+const generationError = ref('')
+
+const generateSolution = async () => {
+  if (!formData.value.kegiatan.trim()) {
+    return
+  }
+
+  isGenerating.value = true
+  generationError.value = ''
+
+  try {
+    // Check if Gemini service is configured
+    if (!geminiService.isConfigured()) {
+      generationError.value = 'API key Gemini belum dikonfigurasi'
+      return
+    }
+
+    const prompt = `Berdasarkan kegiatan proyek berikut: "${formData.value.kegiatan}"
+
+Buatkan solusi yang praktis dan efektif untuk mengatasi tantangan atau mencapai tujuan dari kegiatan tersebut. Berikan solusi yang:
+1. Spesifik dan dapat diterapkan
+2. Realistis dan feasible
+3. Terstruktur dengan langkah-langkah yang jelas
+4. Menggunakan bahasa Indonesia
+
+Format jawaban dalam bentuk poin-poin yang mudah dipahami.`
+
+    const response = await geminiService.generateText(prompt)
+    formData.value.solusi = response
+  } catch (error) {
+    generationError.value = error.message || 'Gagal menggenerate solusi'
+    console.error('Error generating solution:', error)
+  } finally {
+    isGenerating.value = false
+  }
+}
 
 const submitForm = () => {
   // Save to local storage and array
