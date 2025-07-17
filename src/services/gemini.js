@@ -1,12 +1,12 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 class GeminiService {
   constructor() {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
     if (!apiKey) {
       throw new Error('VITE_GEMINI_API_KEY is not set in environment variables');
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.genAI = new GoogleGenAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
   }
 
@@ -33,3 +33,5 @@ class GeminiService {
 }
 
 export default new GeminiService();
+
+export default new
