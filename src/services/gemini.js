@@ -40,7 +40,7 @@ class GeminiService {
 
   async generateText(prompt) {
     if (!this.model) {
-      throw new Error('Gemini API is not configured. :'+this.model);
+      throw new Error(`Gemini API is not configured. Current model state: ${this.model}`);
     }
     try {
       const result = await this.model.generateContent(prompt);
@@ -54,7 +54,7 @@ class GeminiService {
 
   async generateTextStream(prompt) {
     if (!this.model) {
-      throw new Error('Gemini API is not configured.: '+this.model);
+      throw new Error(`Gemini API is not configured. Current model state: ${this.model}`);
     }
     try {
       const result = await this.model.generateContentStream(prompt);
