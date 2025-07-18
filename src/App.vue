@@ -42,7 +42,6 @@ onMounted(() => {
     />
     
     <div class="container mx-auto px-4">
-      <div @click="resetApiKey()">resek</div>
       <!-- Header -->
       <div v-if="!hasApiKey" class="text-center mb-8">
         <div class="flex justify-center items-center gap-4 mb-6">
